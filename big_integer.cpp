@@ -148,11 +148,13 @@ big_integer::big_integer(std::string_view str) : data{0}
     if (str.empty())
         return;
     bool is_negative = str[0] == '-';
-    for (std::string_view::size_type i = is_negative; i < str.length(); ++i) {
-        if (!isdigit(str[i]))
+    if (is_negative)
+        str = str.substr(1);
+    for (auto ch : str) {
+        if (!isdigit(ch))
             throw std::invalid_argument("big_integer::_M_copy_from_string");
         *this = helper_functions::mul_uint(*this, 10);
-        helper_functions::add_uint(*this, str[i] - '0');
+        helper_functions::add_uint(*this, ch - '0');
     }
     helper_functions::to_twos_complemnent(*this, is_negative);
 }
