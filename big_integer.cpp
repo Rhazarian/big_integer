@@ -8,7 +8,7 @@
 #include <functional>
 #include <cassert>
 
-struct big_integer::helper_functions {
+struct helper_functions {
 
   static bool is_zero(big_integer const& x)
   {
@@ -42,10 +42,10 @@ struct big_integer::helper_functions {
   static void chkfmt(big_integer& x) // x - in twos-complement representation
   {
       if (is_negative(x))
-          for (container_t::size_type i = x.data.size() - 1; i && x.data[i] == UINT32_MAX && (x.data[i - 1] >> 31) == 1; --i)
+          for (big_integer::container_t::size_type i = x.data.size() - 1; i && x.data[i] == UINT32_MAX && (x.data[i - 1] >> 31) == 1; --i)
               x.data.pop_back();
       else
-          for (container_t::size_type i = x.data.size() - 1; i && x.data[i] == 0 && (x.data[i - 1] >> 31) == 0; --i)
+          for (big_integer::container_t::size_type i = x.data.size() - 1; i && x.data[i] == 0 && (x.data[i - 1] >> 31) == 0; --i)
               x.data.pop_back();
   }
 
@@ -80,10 +80,9 @@ struct big_integer::helper_functions {
 
   static big_integer mul_uint(big_integer const& x, uint32_t val) // x in sign-magnitude representation, val != 0
   {
-      assert(val != 0);
       big_integer dest(x.data.size(), true);
       uint32_t carry = 0;
-      for (container_t::size_type i = 0; i < x.data.size(); ++i) {
+      for (big_integer::container_t::size_type i = 0; i < x.data.size(); ++i) {
           uint64_t tmp = static_cast<uint64_t>(x.data[i]) * static_cast<uint64_t>(val);
           dest.data[i] = static_cast<uint32_t>(tmp);
           auto overflow = carry > UINT32_MAX - dest.data[i];
@@ -158,11 +157,6 @@ big_integer::big_integer(std::string_view str) : data{0}
     helper_functions::to_twos_complemnent(*this, is_negative);
 }
 
-big_integer::big_integer(big_integer const& other, void (* func)(big_integer&)) : data(other.data)
-{
-    (*func)(*this);
-}
-
 big_integer::big_integer(container_t::size_type size, bool) : data(size) { }
 
 big_integer::~big_integer() = default;
@@ -231,12 +225,16 @@ big_integer big_integer::operator+() const
 
 big_integer big_integer::operator-() const
 {
-    return {*this, &helper_functions::negate};
+    big_integer copy(*this);
+    helper_functions::negate(copy);
+    return copy;
 }
 
 big_integer big_integer::operator~() const
 {
-    return {*this, &helper_functions::logical_complement};
+    big_integer copy(*this);
+    helper_functions::logical_complement(copy);
+    return copy;
 }
 
 big_integer& big_integer::operator++()
@@ -284,8 +282,8 @@ void big_integer::swap(big_integer& other) noexcept
 
 big_integer operator+(big_integer const& lhs, big_integer const& rhs)
 {
-    bool lhs_sign = big_integer::helper_functions::is_negative(lhs);
-    bool same_sign = lhs_sign == big_integer::helper_functions::is_negative(rhs);
+    bool lhs_sign = helper_functions::is_negative(lhs);
+    bool same_sign = lhs_sign == helper_functions::is_negative(rhs);
     auto min_len = std::min(lhs.data.size(), rhs.data.size());
     auto max_len = std::max(lhs.data.size(), rhs.data.size());
     auto const&[max, min] = lhs.data.size() == max_len ? std::forward_as_tuple(lhs, rhs) :
@@ -297,7 +295,7 @@ big_integer operator+(big_integer const& lhs, big_integer const& rhs)
         res.data[i] = lhs.data[i] + rhs.data[i] + carry;
         carry = overflow;
     }
-    uint32_t ext = big_integer::helper_functions::is_negative(min) ? UINT32_MAX : 0;
+    uint32_t ext = helper_functions::is_negative(min) ? UINT32_MAX : 0;
     for (auto i = min_len; i < max_len; ++i) {
         bool overflow = max.data[i] > UINT32_MAX - ext || (carry && max.data[i] == UINT32_MAX - ext);
         res.data[i] = max.data[i] + ext + carry;
@@ -309,7 +307,7 @@ big_integer operator+(big_integer const& lhs, big_integer const& rhs)
         else
             res.data.emplace_back(0);
     }
-    big_integer::helper_functions::chkfmt(res);
+    helper_functions::chkfmt(res);
     return res;
 }
 
@@ -320,12 +318,12 @@ big_integer operator-(big_integer const& lhs, big_integer const& rhs)
 
 big_integer operator*(big_integer const& _lhs, big_integer const& _rhs)
 {
-    if (big_integer::helper_functions::is_zero(_lhs) || big_integer::helper_functions::is_zero(_rhs))
+    if (helper_functions::is_zero(_lhs) || helper_functions::is_zero(_rhs))
         return 0;
-    const bool sign = big_integer::helper_functions::is_negative(_lhs) != big_integer::helper_functions::is_negative(_rhs);
+    const bool sign = helper_functions::is_negative(_lhs) != helper_functions::is_negative(_rhs);
     big_integer lhs(_lhs), rhs(_rhs);
-    big_integer::helper_functions::to_sign_magnitude(lhs);
-    big_integer::helper_functions::to_sign_magnitude(rhs);
+    helper_functions::to_sign_magnitude(lhs);
+    helper_functions::to_sign_magnitude(rhs);
     if (lhs.data.size() < rhs.data.size())
         lhs.swap(rhs);
     big_integer res(lhs.data.size() + rhs.data.size(), true);
@@ -333,7 +331,7 @@ big_integer operator*(big_integer const& _lhs, big_integer const& _rhs)
         *it = 0;
     for (big_integer::container_t::size_type i = 0; i < rhs.data.size(); ++i) {
         big_integer tmp(lhs);
-        tmp = big_integer::helper_functions::mul_uint(tmp, rhs.data[i]);
+        tmp = helper_functions::mul_uint(tmp, rhs.data[i]);
         bool carry = 0;
         for (big_integer::container_t::size_type j = i; j < i + tmp.data.size(); ++j) {
             bool overflow = res.data[j] > UINT32_MAX - tmp.data[j - i]
@@ -344,40 +342,40 @@ big_integer operator*(big_integer const& _lhs, big_integer const& _rhs)
         if (carry)
             res.data[i + tmp.data.size()] = 1;
     }
-    big_integer::helper_functions::to_twos_complemnent(res, sign);
-    big_integer::helper_functions::chkfmt(res);
+    helper_functions::to_twos_complemnent(res, sign);
+    helper_functions::chkfmt(res);
     return res;
 }
 
 big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
 {
-    if (big_integer::helper_functions::is_zero(_rhs))
+    if (helper_functions::is_zero(_rhs))
         throw std::invalid_argument("big_integer::_M_division_by_zero");
-    const bool sign = big_integer::helper_functions::is_negative(_lhs) != big_integer::helper_functions::is_negative(_rhs);
+    const bool sign = helper_functions::is_negative(_lhs) != helper_functions::is_negative(_rhs);
     big_integer lhs(_lhs), rhs(_rhs);
-    big_integer::helper_functions::to_sign_magnitude(lhs);
-    big_integer::helper_functions::to_sign_magnitude(rhs);
-    if (big_integer::helper_functions::cmp_abs(lhs, rhs) < 0)
+    helper_functions::to_sign_magnitude(lhs);
+    helper_functions::to_sign_magnitude(rhs);
+    if (helper_functions::cmp_abs(lhs, rhs) < 0)
         return 0;
     if (rhs.data.size() == 1) {
-        big_integer::helper_functions::div_uint(lhs, rhs.data[0]);
-        big_integer::helper_functions::to_twos_complemnent(lhs, sign);
+        helper_functions::div_uint(lhs, rhs.data[0]);
+        helper_functions::to_twos_complemnent(lhs, sign);
         return lhs;
     }
     auto n = lhs.data.size();
     auto l = lhs.data.size() - rhs.data.size() + 1;
     uint32_t scaling_factor = static_cast<uint32_t>((static_cast<uint64_t>(UINT32_MAX) + 1) / (static_cast<uint64_t>(rhs.data.back()) + 1));
-    lhs = big_integer::helper_functions::mul_uint(lhs, scaling_factor);
+    lhs = helper_functions::mul_uint(lhs, scaling_factor);
     if (lhs.data.size() == n)
         lhs.data.emplace_back(0);
-    rhs = big_integer::helper_functions::mul_uint(rhs, scaling_factor);
+    rhs = helper_functions::mul_uint(rhs, scaling_factor);
     big_integer res(0, true);
     big_integer tmp;
     for (big_integer::container_t::size_type cnt = 0, k = 0; k < l; ++k) {
         uint32_t trial = static_cast<uint32_t>(std::min(((static_cast<uint64_t>(lhs.data.back()) << 32) |
                         (lhs.data.size() > 1 ? lhs.data[lhs.data.size() - 2] : 0)) / rhs.data.back(),
                 static_cast<uint64_t>(UINT32_MAX)));
-        tmp = big_integer::helper_functions::mul_uint(rhs, trial);
+        tmp = helper_functions::mul_uint(rhs, trial);
         if (tmp.data.size() == rhs.data.size())
             tmp.data.emplace_back(0);
         if (!cnt) {
@@ -387,7 +385,7 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
                       return tmp.data[i] > lhs.data[j];
               return false;
             }()) {
-                tmp = big_integer::helper_functions::mul_uint(rhs, --trial);
+                tmp = helper_functions::mul_uint(rhs, --trial);
                 if (tmp.data.size() == rhs.data.size())
                     tmp.data.emplace_back(0);
             }
@@ -411,8 +409,8 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
         res.data.emplace_back(trial);
     }
     std::reverse(res.data.begin(), res.data.end());
-    big_integer::helper_functions::to_twos_complemnent(res, sign);
-    big_integer::helper_functions::chkfmt(res);
+    helper_functions::to_twos_complemnent(res, sign);
+    helper_functions::chkfmt(res);
     return res;
 }
 
@@ -430,7 +428,7 @@ big_integer operator&(big_integer const& lhs, big_integer const& rhs)
     big_integer res(max_len, true);
     for (big_integer::container_t::size_type i = 0; i < min_len; ++i)
         res.data[i] = lhs.data[i] & rhs.data[i];
-    uint32_t ext = big_integer::helper_functions::is_negative(min) ? UINT32_MAX : 0;
+    uint32_t ext = helper_functions::is_negative(min) ? UINT32_MAX : 0;
     for (auto i = min_len; i < max_len; ++i)
         res.data[i] = max.data[i] & ext;
     return res;
@@ -445,7 +443,7 @@ big_integer operator|(big_integer const& lhs, big_integer const& rhs)
     big_integer res(max_len, true);
     for (big_integer::container_t::size_type i = 0; i < min_len; ++i)
         res.data[i] = lhs.data[i] | rhs.data[i];
-    uint32_t ext = big_integer::helper_functions::is_negative(min) ? UINT32_MAX : 0;
+    uint32_t ext = helper_functions::is_negative(min) ? UINT32_MAX : 0;
     for (auto i = min_len; i < max_len; ++i)
         res.data[i] = max.data[i] | ext;
     return res;
@@ -460,7 +458,7 @@ big_integer operator^(big_integer const& lhs, big_integer const& rhs)
     big_integer res(max_len, true);
     for (big_integer::container_t::size_type i = 0; i < min_len; ++i)
         res.data[i] = lhs.data[i] ^ rhs.data[i];
-    uint32_t ext = big_integer::helper_functions::is_negative(min) ? UINT32_MAX : 0;
+    uint32_t ext = helper_functions::is_negative(min) ? UINT32_MAX : 0;
     for (auto i = min_len; i < max_len; ++i)
         res.data[i] = max.data[i] ^ ext;
     return res;
@@ -482,7 +480,7 @@ big_integer operator<<(big_integer const& lhs, int val) // lhs - is negative -->
     }
     if (carry)
         res.data.emplace_back(carry);
-    big_integer::helper_functions::chkfmt(res);
+    helper_functions::chkfmt(res);
     return res;
 }
 
@@ -501,38 +499,38 @@ big_integer operator>>(big_integer const& lhs, int val)
         res.data[i] = (lhs.data[i] >> val) | carry;
         carry = (lhs.data[i] << (32 - val));
     }
-    big_integer::helper_functions::chkfmt(res);
+    helper_functions::chkfmt(res);
     return res;
 }
 
 bool operator==(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) == 0;
+    return helper_functions::cmp(lhs, rhs) == 0;
 }
 
 bool operator!=(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) != 0;
+    return helper_functions::cmp(lhs, rhs) != 0;
 }
 
 bool operator<(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) < 0;
+    return helper_functions::cmp(lhs, rhs) < 0;
 }
 
 bool operator>(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) > 0;
+    return helper_functions::cmp(lhs, rhs) > 0;
 }
 
 bool operator<=(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) <= 0;
+    return helper_functions::cmp(lhs, rhs) <= 0;
 }
 
 bool operator>=(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper_functions::cmp(lhs, rhs) >= 0;
+    return helper_functions::cmp(lhs, rhs) >= 0;
 }
 
 void swap(big_integer& lhs, big_integer& rhs) noexcept
@@ -542,19 +540,19 @@ void swap(big_integer& lhs, big_integer& rhs) noexcept
 
 big_integer abs(big_integer const& x)
 {
-    return big_integer::helper_functions::is_negative(x) ? -x : x;
+    return helper_functions::is_negative(x) ? -x : x;
 }
 
 std::string to_string(big_integer const& x)
 {
     big_integer copy(x);
-    bool is_negative = big_integer::helper_functions::is_negative(copy);
+    bool is_negative = helper_functions::is_negative(copy);
     if (is_negative)
-        big_integer::helper_functions::negate(copy);
+        helper_functions::negate(copy);
     std::string str;
     do
-        str += std::to_string(big_integer::helper_functions::div_uint(copy, 10));
-    while (!big_integer::helper_functions::is_zero(copy));
+        str += std::to_string(helper_functions::div_uint(copy, 10));
+    while (!helper_functions::is_zero(copy));
     if (is_negative)
         str += '-';
     std::reverse(str.begin(), str.end());

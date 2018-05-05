@@ -66,14 +66,15 @@ struct big_integer {
     friend std::string to_string(big_integer const& x);
 
 private:
-    struct helper_functions;
+    friend struct helper_functions;
 
     typedef std::vector<uint32_t> container_t;
     container_t data;
 
-    big_integer(big_integer const& other, void (*func)(big_integer&));
     big_integer(container_t::size_type size, bool);
 };
+
+struct helper_functions;
 
 big_integer operator+(big_integer const& lhs, big_integer const& rhs);
 big_integer operator-(big_integer const& lhs, big_integer const& rhs);
