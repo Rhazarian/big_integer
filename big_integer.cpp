@@ -78,9 +78,10 @@ struct big_integer::helper_functions {
           x.data.emplace_back(0);
   }
 
-  static void mul_uint(big_integer& dest, big_integer const& x, uint32_t val) // x in sign-magnitude representation, val != 0
+  static big_integer mul_uint(big_integer const& x, uint32_t val) // x in sign-magnitude representation, val != 0
   {
       assert(val != 0);
+      big_integer dest(x.data.size(), true);
       uint32_t carry = 0;
       for (container_t::size_type i = 0; i < x.data.size(); ++i) {
           uint64_t tmp = static_cast<uint64_t>(x.data[i]) * static_cast<uint64_t>(val);
@@ -91,6 +92,7 @@ struct big_integer::helper_functions {
       }
       if (carry)
           dest.data.emplace_back(carry);
+      return dest;
   }
 
   static uint32_t div_uint(big_integer& x, uint32_t val) // x - in sign-magnitude representation, val != 0
@@ -150,7 +152,7 @@ big_integer::big_integer(std::string_view str) : data{0}
     for (std::string_view::size_type i = is_negative; i < str.length(); ++i) {
         if (!isdigit(str[i]))
             throw std::invalid_argument("big_integer::_M_copy_from_string");
-        helper_functions::mul_uint(*this, *this, 10);
+        *this = helper_functions::mul_uint(*this, 10);
         helper_functions::add_uint(*this, str[i] - '0');
     }
     helper_functions::to_twos_complemnent(*this, is_negative);
@@ -161,7 +163,7 @@ big_integer::big_integer(big_integer const& other, void (* func)(big_integer&)) 
     (*func)(*this);
 }
 
-big_integer::big_integer(container_t::size_type size, bool) : data(size) { };
+big_integer::big_integer(container_t::size_type size, bool) : data(size) { }
 
 big_integer::~big_integer() = default;
 
@@ -331,7 +333,7 @@ big_integer operator*(big_integer const& _lhs, big_integer const& _rhs)
         *it = 0;
     for (big_integer::container_t::size_type i = 0; i < rhs.data.size(); ++i) {
         big_integer tmp(lhs);
-        big_integer::helper_functions::mul_uint(tmp, tmp, rhs.data[i]);
+        tmp = big_integer::helper_functions::mul_uint(tmp, rhs.data[i]);
         bool carry = 0;
         for (big_integer::container_t::size_type j = i; j < i + tmp.data.size(); ++j) {
             bool overflow = res.data[j] > UINT32_MAX - tmp.data[j - i]
@@ -365,18 +367,17 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
     auto n = lhs.data.size();
     auto l = lhs.data.size() - rhs.data.size() + 1;
     uint32_t scaling_factor = static_cast<uint32_t>((static_cast<uint64_t>(UINT32_MAX) + 1) / (static_cast<uint64_t>(rhs.data.back()) + 1));
-    big_integer::helper_functions::mul_uint(lhs, lhs, scaling_factor);
+    lhs = big_integer::helper_functions::mul_uint(lhs, scaling_factor);
     if (lhs.data.size() == n)
         lhs.data.emplace_back(0);
-    big_integer::helper_functions::mul_uint(rhs, rhs, scaling_factor);
+    rhs = big_integer::helper_functions::mul_uint(rhs, scaling_factor);
     big_integer res(0, true);
     big_integer tmp;
     for (big_integer::container_t::size_type cnt = 0, k = 0; k < l; ++k) {
         uint32_t trial = static_cast<uint32_t>(std::min(((static_cast<uint64_t>(lhs.data.back()) << 32) |
                         (lhs.data.size() > 1 ? lhs.data[lhs.data.size() - 2] : 0)) / rhs.data.back(),
                 static_cast<uint64_t>(UINT32_MAX)));
-        tmp.data.resize(rhs.data.size());
-        big_integer::helper_functions::mul_uint(tmp, rhs, trial);
+        tmp = big_integer::helper_functions::mul_uint(rhs, trial);
         if (tmp.data.size() == rhs.data.size())
             tmp.data.emplace_back(0);
         if (!cnt) {
@@ -386,8 +387,7 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
                       return tmp.data[i] > lhs.data[j];
               return false;
             }()) {
-                tmp.data.resize(rhs.data.size());
-                big_integer::helper_functions::mul_uint(tmp, rhs, --trial);
+                tmp = big_integer::helper_functions::mul_uint(rhs, --trial);
                 if (tmp.data.size() == rhs.data.size())
                     tmp.data.emplace_back(0);
             }
