@@ -26,8 +26,8 @@ struct big_integer::helper {
 
     static void logical_complement(big_integer& x) // x - in twos-complement representation
     {
-        for (auto it = x.data.begin(); it != x.data.end(); ++it) {
-            *it = ~(*it);
+        for (auto& it : x.data) {
+            it = ~it;
         }
     }
 
@@ -166,7 +166,7 @@ struct big_integer::helper {
     }
 
     static big_integer bit_operation(big_integer const& lhs, big_integer const& rhs,
-            std::function<uint32_t(uint32_t, uint32_t)> func)
+            const std::function<uint32_t(uint32_t, uint32_t)>& func)
     {
         dynamic_storage<uint32_t> hello;
         auto min_len = std::min(lhs.data.size(), rhs.data.size());
@@ -188,7 +188,7 @@ struct big_integer::helper {
 
 big_integer::big_integer() : data{0} { }
 
-big_integer::big_integer(big_integer const& x) : data(x.data) { }
+big_integer::big_integer(big_integer const& x) = default;
 
 big_integer::big_integer(int32_t val) : data{static_cast<uint32_t>(val)} { }
 
@@ -211,7 +211,7 @@ big_integer::big_integer(std::string_view str) : data{0}
     big_integer::helper::to_twos_complement(*this, is_negative);
 }
 
-big_integer::big_integer(container_t data) : data(data) { }
+big_integer::big_integer(container_t data) : data(std::move(data)) { }
 
 big_integer::~big_integer() = default;
 
@@ -490,25 +490,26 @@ big_integer operator%(big_integer const& lhs, big_integer const& rhs)
 
 big_integer operator&(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper::bit_operation(lhs, rhs, std::bit_and<uint32_t>());
+    return big_integer::helper::bit_operation(lhs, rhs, std::bit_and<>());
 }
 
 big_integer operator|(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper::bit_operation(lhs, rhs, std::bit_or<uint32_t>());
+    return big_integer::helper::bit_operation(lhs, rhs, std::bit_or<>());
 }
 
 big_integer operator^(big_integer const& lhs, big_integer const& rhs)
 {
-    return big_integer::helper::bit_operation(lhs, rhs, std::bit_xor<uint32_t>());
+    return big_integer::helper::bit_operation(lhs, rhs, std::bit_xor<>());
 }
 
-big_integer operator<<(big_integer const& lhs, int val) // lhs - is negative --> UB
+big_integer operator<<(big_integer const& lhs, int val)
 {
     if (val < 0)
         return lhs >> -val;
     unsigned skip = val / 32;
     val %= 32;
+    const bool sign = big_integer::helper::is_negative(lhs);
     big_integer res((big_integer::container_t(lhs.data.size() + skip)));
     uint32_t carry = 0;
     for (big_integer::container_t::size_type i = 0; i < skip; ++i) {
@@ -518,8 +519,17 @@ big_integer operator<<(big_integer const& lhs, int val) // lhs - is negative -->
         res.data[i] = (lhs.data[i - skip] << val) | carry;
         carry = lhs.data[i - skip] >> (32 - val);
     }
-    if (carry) {
-        res.data.emplace_back(carry);
+    res.data.emplace_back(carry);
+    if (big_integer::helper::is_negative(res) != sign) {
+        if (!sign) {
+            res.data.emplace_back(0);
+        } else {
+            uint32_t x = res.data.back();
+            for (uint8_t p = 1; p <= 16; p <<= 1) {
+                x |= x >> p;
+            }
+            res.data.back() = res.data.back() | (std::numeric_limits<uint32_t>::max() ^ x);
+        }
     }
     big_integer::helper::normalize(res);
     return res;
@@ -536,10 +546,10 @@ big_integer operator>>(big_integer const& lhs, int val)
         return 0;
     }
     big_integer res((big_integer::container_t(lhs.data.size() - skip)));
-    res.data[lhs.data.size() - 1] = static_cast<int32_t>(lhs.data[lhs.data.size() - 1]) >> val;
-    uint32_t carry = lhs.data[lhs.data.size() - 1] << (32 - val);
+    res.data.back() = static_cast<int32_t>(lhs.data.back()) >> val;
+    uint32_t carry = lhs.data.back() << (32 - val);
     for (big_integer::container_t::size_type i = lhs.data.size() - 1; i-- > skip;) {
-        res.data[i] = (lhs.data[i] >> val) | carry;
+        res.data[i - skip] = (lhs.data[i] >> val) | carry;
         carry = (lhs.data[i] << (32 - val));
     }
     big_integer::helper::normalize(res);

@@ -6,10 +6,8 @@
 #include "big_integer.h"
 
 int main() {
-    big_integer a = std::numeric_limits<int>::min();
-    big_integer b = -a;
-    big_integer mone = -1;
-    big_integer c = b + mone;
-    std::cout << b - 1;
+    big_integer test("-12312312312581274981237984127394");
+    test >>= 20;
+    std::cout << test;
     return 0;
 }
