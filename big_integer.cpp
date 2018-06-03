@@ -61,7 +61,7 @@ struct big_integer::helper {
         }
     }
 
-    static void to_twos_complemnent(big_integer& x, bool sign)
+    static void to_twos_complement(big_integer& x, bool sign)
     {
         if (is_negative(x)) {
             x.data.emplace_back(0);
@@ -207,7 +207,7 @@ big_integer::big_integer(std::string_view str) : data{0}
         *this = big_integer::helper::mul_uint(*this, 10);
         big_integer::helper::add_uint(*this, ch - '0');
     }
-    big_integer::helper::to_twos_complemnent(*this, is_negative);
+    big_integer::helper::to_twos_complement(*this, is_negative);
 }
 
 big_integer::big_integer(container_t data) : data(data) { }
@@ -401,7 +401,7 @@ big_integer operator*(big_integer const& _lhs, big_integer const& _rhs)
             res.data[i + tmp.data.size()] = 1;
         }
     }
-    big_integer::helper::to_twos_complemnent(res, sign);
+    big_integer::helper::to_twos_complement(res, sign);
     big_integer::helper::normalize(res);
     return res;
 }
@@ -420,7 +420,7 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
     }
     if (rhs.data.size() == 1) {
         big_integer::helper::div_uint(lhs, rhs.data[0]);
-        big_integer::helper::to_twos_complemnent(lhs, sign);
+        big_integer::helper::to_twos_complement(lhs, sign);
         return lhs;
     }
     auto n = lhs.data.size();
@@ -477,7 +477,7 @@ big_integer operator/(big_integer const& _lhs, big_integer const& _rhs)
         res.data.emplace_back(trial);
     }
     std::reverse(res.data.begin(), res.data.end());
-    big_integer::helper::to_twos_complemnent(res, sign);
+    big_integer::helper::to_twos_complement(res, sign);
     big_integer::helper::normalize(res);
     return res;
 }
