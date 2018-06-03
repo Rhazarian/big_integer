@@ -10,7 +10,7 @@ add_executable(big_integer_testing
         dynamic_storage.h
         gtest/gtest-all.cc
         gtest/gtest.h
-        gtest/gtest_main.cc)
+        gtest/gtest_main.cc main.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++17 -pedantic")
