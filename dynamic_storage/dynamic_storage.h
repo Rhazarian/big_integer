@@ -4,11 +4,11 @@
 #include <cstdlib>
 
 template<typename T>
-struct dynammic_storage {
-    dynammic_storage() noexcept;
-    explicit dynammic_storage(size_t n, T value = T());
-    dynammic_storage(dynammic_storage const& other);
-    ~dynammic_storage() noexcept;
+struct dynamic_storage {
+    dynamic_storage() noexcept;
+    explicit dynamic_storage(size_t n, T value = T());
+    dynamic_storage(dynamic_storage const& other);
+    ~dynamic_storage() noexcept;
 };
 
 #include <dynamic_storage.tpp>
