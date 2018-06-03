@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <initializer_list>
+#include <new>
 #include <memory>
 #include <cstring>
 

@@ -9,6 +9,10 @@ template<typename T>
 struct dynamic_storage {
 public:
     typedef size_t size_type;
+    typedef T* iterator;
+    typedef T const* const_iterator;
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     dynamic_storage();
     explicit dynamic_storage(size_type n, T value = T());
