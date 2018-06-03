@@ -5,13 +5,14 @@
 #include <vector>
 #include <cstdint>
 #include <string_view>
+#include "dynamic_storage.h"
 
 struct big_integer {
     big_integer();
     big_integer(big_integer const& x);
     big_integer(int32_t val);
     explicit big_integer(std::string_view str);
-    ~big_integer() noexcept;
+    ~big_integer();
 
     big_integer& operator=(big_integer const& rhs);
 

@@ -168,6 +168,7 @@ struct big_integer::helper {
     static big_integer bit_operation(big_integer const& lhs, big_integer const& rhs,
             std::function<uint32_t(uint32_t, uint32_t)> func)
     {
+        dynamic_storage<uint32_t> hello;
         auto min_len = std::min(lhs.data.size(), rhs.data.size());
         auto max_len = std::max(lhs.data.size(), rhs.data.size());
         auto const&[max, min] = lhs.data.size() == max_len ? std::forward_as_tuple(lhs, rhs) :
