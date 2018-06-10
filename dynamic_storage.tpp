@@ -312,7 +312,7 @@ bool dynamic_storage<T>::is_data_big() const noexcept
 }
 
 template<typename T>
-dynamic_storage& dynamic_storage<T>::operator=(dynamic_storage const& other)
+dynamic_storage<T>& dynamic_storage<T>::operator=(dynamic_storage const& other)
 {
     dynamic_storage copy(other);
     swap(copy);
