@@ -41,12 +41,16 @@ public:
 
     iterator begin() noexcept;
     const_iterator begin() const noexcept;
+    const_iterator cbegin() const noexcept;
     iterator end() noexcept;
     const_iterator end() const noexcept;
+    const_iterator cend() const noexcept;
     reverse_iterator rbegin() noexcept;
     const_reverse_iterator rbegin() const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
     reverse_iterator rend() noexcept;
     const_reverse_iterator rend() const noexcept;
+    const_reverse_iterator crend() const noexcept;
 
 private:
     size_type _size;

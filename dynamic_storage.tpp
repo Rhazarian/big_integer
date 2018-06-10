@@ -238,8 +238,13 @@ typename dynamic_storage<T>::iterator dynamic_storage<T>::begin() noexcept {
 }
 
 template<typename T>
-typename dynamic_storage<T>::const_iterator dynamic_storage<T>::begin() const noexcept {
+typename dynamic_storage<T>::const_iterator dynamic_storage<T>::cbegin() const noexcept {
     return current;
+}
+
+template<typename T>
+typename dynamic_storage<T>::const_iterator dynamic_storage<T>::begin() const noexcept {
+    return cbegin();
 }
 
 template<typename T>
@@ -248,8 +253,13 @@ typename dynamic_storage<T>::iterator dynamic_storage<T>::end() noexcept {
 }
 
 template<typename T>
+typename dynamic_storage<T>::const_iterator dynamic_storage<T>::cend() const noexcept {
+    return cbegin() + _size;
+}
+
+template<typename T>
 typename dynamic_storage<T>::const_iterator dynamic_storage<T>::end() const noexcept {
-    return begin() + _size;
+    return cend();
 }
 
 template<typename T>
@@ -258,8 +268,13 @@ typename dynamic_storage<T>::reverse_iterator dynamic_storage<T>::rbegin() noexc
 }
 
 template<typename T>
-typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::rbegin() const noexcept {
+typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::crbegin() const noexcept {
     return dynamic_storage<T>::const_reverse_iterator(end());
+}
+
+template<typename T>
+typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::rbegin() const noexcept {
+    return crbegin();
 }
 
 template<typename T>
@@ -268,8 +283,13 @@ typename dynamic_storage<T>::reverse_iterator dynamic_storage<T>::rend() noexcep
 }
 
 template<typename T>
-typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::rend() const noexcept {
+typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::crend() const noexcept {
     return dynamic_storage<T>::const_reverse_iterator(begin());
+}
+
+template<typename T>
+typename dynamic_storage<T>::const_reverse_iterator dynamic_storage<T>::rend() const noexcept {
+    return crend();
 }
 
 template<typename T>
