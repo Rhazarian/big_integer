@@ -129,7 +129,7 @@ dynamic_storage<T>::dynamic_storage(size_t n, T value) : _size(n) {
 
 template<typename T>
 dynamic_storage<T>::dynamic_storage(dynamic_storage const& other) : _size(other._size) {
-    if (_size <= small_data::capacity) {
+    if (!other.is_data_big()) {
         memcpy(_data.small.data, other._data.small.data, small_data::capacity * sizeof(T));
         current = _data.small.data;
     } else {

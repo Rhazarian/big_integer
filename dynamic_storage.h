@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <initializer_list>
 #include <memory>
+#include <algorithm>
 
 template<typename T>
 struct dynamic_storage {
@@ -68,7 +69,7 @@ private:
         ~big_data();
     };
     struct small_data {
-        static constexpr size_t capacity = sizeof(big_data) / sizeof(T) != 0 ? sizeof(big_data) / sizeof(T) : 1;
+        static constexpr size_t capacity = std::min(sizeof(big_data) / sizeof(T), static_cast<size_t>(1));
         T data[capacity];
     };
     union any_data {
