@@ -20,6 +20,7 @@ public:
     dynamic_storage(std::initializer_list<T> init);
     ~dynamic_storage();
 
+    dynamic_storage& operator=(dynamic_storage const &other);
 
     template<class... Args>
     void emplace_back(Args&&... args);
@@ -76,6 +77,7 @@ private:
 
     void set_capacity(size_type capacity);
     void prepare_for_modification();
+    bool is_data_big() const noexcept;
 };
 
 #include "dynamic_storage.tpp"
