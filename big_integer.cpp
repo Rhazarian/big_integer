@@ -211,7 +211,7 @@ big_integer::big_integer(std::string_view str) : data{0}
     big_integer::helper::to_twos_complement(*this, is_negative);
 }
 
-big_integer::big_integer(container_t data) : data(std::move(data)) { }
+big_integer::big_integer(container_t const& data) : data(data) { }
 
 big_integer::~big_integer() = default;
 
@@ -333,7 +333,7 @@ big_integer big_integer::operator--(int)
 
 void big_integer::swap(big_integer& other) noexcept
 {
-    data.swap(other.data); // noexcept since C++17
+    data.swap(other.data);
 }
 
 big_integer operator+(big_integer const& lhs, big_integer const& rhs)

@@ -20,13 +20,35 @@ public:
     dynamic_storage(std::initializer_list<T> init);
     ~dynamic_storage();
 
+
+    template<class... Args>
+    void emplace_back(Args&&... args);
+    void push_back(T value);
+    void pop_back();
+
     bool empty() const noexcept;
+    T& back() noexcept;
+    T const& back() const noexcept;
+    T& operator[](size_type n) noexcept;
+    T const& operator[](size_type n) const noexcept;
     size_type size() const noexcept;
     size_type capacity() const noexcept;
+    void reserve(size_type n);
     void shrink_to_fit();
 
+    void swap(dynamic_storage& other) noexcept;
+
+    iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+    iterator end() noexcept;
+    const_iterator end() const noexcept;
+    reverse_iterator rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+    reverse_iterator rend() noexcept;
+    const_reverse_iterator rend() const noexcept;
+
 private:
-    size_t _size;
+    size_type _size;
     struct big_data {
         struct deleter {
             deleter();
@@ -50,6 +72,7 @@ private:
         any_data();
         ~any_data();
     } _data;
+    T* current;
 
     void set_capacity(size_type capacity);
     void prepare_for_modification();

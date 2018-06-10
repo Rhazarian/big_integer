@@ -8,6 +8,7 @@ add_executable(big_integer_testing
         big_integer.h
         big_integer.cpp
         dynamic_storage.h
+        dynamic_storage.tpp
         gtest/gtest-all.cc
         gtest/gtest.h
         gtest/gtest_main.cc)

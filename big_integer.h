@@ -69,10 +69,10 @@ struct big_integer {
 private:
     struct helper;
 
-    typedef std::vector<uint32_t> container_t;
+    typedef dynamic_storage<uint32_t> container_t;
     container_t data;
 
-    explicit big_integer(container_t data);
+    explicit big_integer(container_t const& data);
 };
 
 big_integer operator+(big_integer const& lhs, big_integer const& rhs);
